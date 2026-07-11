@@ -1,0 +1,21 @@
+services:
+
+  auth:
+    container_name: "auth"
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8001:8000"
+    networks:
+      - app
+    env_file:
+      - ./auth-service/environment/.env
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+networks:
+  app:
