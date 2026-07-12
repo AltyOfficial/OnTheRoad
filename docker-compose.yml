@@ -1,5 +1,23 @@
 services:
 
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: vput_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHODS: trust
+    env_file:
+      - ./auth-service/environment/.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - app
+
   auth:
     container_name: "auth"
     build:
@@ -9,13 +27,16 @@ services:
     command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8001:8000"
-    networks:
-      - app
     env_file:
       - ./auth-service/environment/.env
     volumes:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    networks:
+      - app
+
+volumes:
+  pgdata:
 
 networks:
   app:
