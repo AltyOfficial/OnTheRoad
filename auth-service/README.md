@@ -44,6 +44,7 @@ auth-service/
 ├── Dockerfile              # Многоэтапный (multi-stage) Dockerfile для сборки
 ├── pyproject.toml          # Зависимости проекта (uv)
 └── uv.lock                 # Лок-файл зависимостей
+```
 
 ## Быстрый старт (Локальная разработка)
 
