@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.139.0",
     "pydantic>=2.13.4",
     "pydantic-settings>=2.14.2",
+    "ruff>=0.15.21",
     "sentry-sdk>=2.64.0",
     "sqlalchemy>=2.0.51",
     "uvicorn>=0.51.0",
