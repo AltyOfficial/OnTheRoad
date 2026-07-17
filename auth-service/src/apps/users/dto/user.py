@@ -18,3 +18,17 @@ class UserBaseDTO(BaseDTO):
 class UserCreateDTO(BaseDTO):
     login: str
     password: str
+
+
+class UserLoginDTO(BaseDTO):
+    login: str
+    password: str
+
+
+class AuthTokensDTO(BaseDTO):
+    """JWT tokens DTO."""
+
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_at: datetime
