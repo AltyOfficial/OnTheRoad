@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Tuple
 from uuid import UUID
 
+import bcrypt
 import jwt
-from passlib.context import CryptContext
 
 from src.apps.users.exceptions import InvalidTokenError
 from src.config.settings import settings
@@ -24,15 +24,24 @@ class Security:
         self.algorithm = algorithm
         self.access_token_expire_minutes = access_token_expire_minutes
         self.refresh_token_expire_days = refresh_token_expire_days
-        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
     def hash_password(self, password: str) -> str:
+        """Hash password with bcrypt."""
 
-        return self.pwd_context.hash(password)
+        pwd_bytes = password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
+
+        return hashed_password.decode('utf-8')
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
 
-        return self.pwd_context.verify(plain_password, hashed_password)
+        password_byte_enc = plain_password.encode('utf-8')
+
+        return bcrypt.checkpw(
+            password=password_byte_enc,
+            hashed_password=hashed_password,
+        )
 
     def hash_token_sha256(self, token: str) -> str:
         """Hash password with SHA256. Used for storing refresh tokens in DB."""
