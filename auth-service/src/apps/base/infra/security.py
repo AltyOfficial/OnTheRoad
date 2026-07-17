@@ -37,10 +37,11 @@ class Security:
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
 
         password_byte_enc = plain_password.encode('utf-8')
+        hashed_password_enc = hashed_password.encode('utf-8')
 
         return bcrypt.checkpw(
             password=password_byte_enc,
-            hashed_password=hashed_password,
+            hashed_password=hashed_password_enc,
         )
 
     def hash_token_sha256(self, token: str) -> str:
