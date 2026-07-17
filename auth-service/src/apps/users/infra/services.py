@@ -40,13 +40,21 @@ class UserService(BaseService):
         
         return UserBaseDTO.model_validate(new_user)
     
-    async def login(self, payload: UserLoginDTO, user_agent: Optional[str], ip_address: Optional[str]) -> AuthTokensDTO:
+    async def login(
+        self,
+        payload: UserLoginDTO,
+        user_agent: Optional[str],
+        ip_address: Optional[str],
+    ) -> AuthTokensDTO:
         """Authenticate user and return jwt tokens."""
 
         async with self.uow:
             user = await self.uow.users.get_by_login(payload.login)
             if not user or not self.security.verify_password(payload.password, user.hashed_password):
                 raise InvalidCredentialsError("Invalid login credentials.")
+            
+            await self.uow.user_sessions.delete_expired_sessions(user_id=user.id)
+            await self.uow.user_sessions.keep_last_sessions(user_id=user.id, max_sessions=5)
             
             access_token = self.security.create_access_token(user_id=user.id)
             refresh_token, expire = self.security.create_refresh_token(user_id=user.id)
@@ -68,7 +76,7 @@ class UserService(BaseService):
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer",
-            expires_in=expire,
+            expires_at=expire,
         )
         
 

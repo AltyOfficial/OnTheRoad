@@ -18,3 +18,15 @@ class UserDetailResponseSchema(CustomBaseModel):
 class UserCreateRequestSchema(CustomBaseModel):
     login: str
     password: str
+
+
+class UserLoginRequestSchema(CustomBaseModel):
+    login: str
+    password: str
+
+
+class AuthTokenResponseSchema(CustomBaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    expires_at: datetime
