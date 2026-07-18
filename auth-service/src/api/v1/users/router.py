@@ -121,3 +121,31 @@ async def refresh_tokens(
         )
 
     return AuthTokenResponseSchema.model_validate(tokens)
+
+
+@router.post(
+    "/logout/",
+    description="Logout User and Invoke Refresh Token",
+    response_model=None,
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def logout(
+    payload: RefreshTokenRequestSchema,
+    service: UserService = Depends(get_user_service),
+) -> None:
+    """Logout User."""
+
+    try:
+        await service.logout(payload=payload)
+    except (InvalidTokenError, SessionNotFoundError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        )
+    except Exception as exc:
+        logger.error(f"Error refreshing tokens: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"server error",
+        )
+

@@ -136,6 +136,24 @@ class UserService(BaseService):
             token_type="bearer",
             expires_at=new_expire,
         )
+    
+    async def logout(self, payload: TokenRefreshDTO) -> None:
+        """Invoke refresh token from DB."""
+
+        token_hash = self.security.hash_token_sha256(payload.refresh_token)
+
+        async with self.uow:
+            session = await self.uow.user_sessions.get_by_hash(token_hash)
+            if not session:
+                raise SessionNotFoundError("Session not found for the provided refresh token.")
+            
+            if session.expires_at < datetime.now(timezone.utc):
+                raise SessionNotFoundError("Session has expired for the provided refresh token.")
+
+            if session:
+                await self.uow.user_sessions.delete(id=session.id)
+            
+            await self.uow.commit()
         
 
 def get_user_service(
