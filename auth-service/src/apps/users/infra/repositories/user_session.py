@@ -1,19 +1,29 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import delete, select
 
 from src.apps.base.infra.repository import DatabaseRepository
+from src.apps.users.models import UserSession
 
 
 class UserSessionRepository(DatabaseRepository):
+    model: UserSession
+
+    async def get_by_hash(self, refresh_token_hash: str):
+        """Get a user session by its refresh token hash."""
+        
+        stmt = select(self.model).where(self.model.refresh_token_hash == refresh_token_hash)
+        result = await self.session.execute(stmt)
+
+        return result.scalar_one_or_none()
     
     async def delete_expired_sessions(self, user_id: UUID) -> None:
         """Delete expired sessions for a user."""
         
         stmt = delete(self.model).where(
             self.model.user_id == user_id,
-            self.model.expires_at < datetime.utcnow()
+            self.model.expires_at < datetime.now(tz=timezone.utc)
         )
         await self.session.execute(stmt)
 

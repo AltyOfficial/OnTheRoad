@@ -32,3 +32,7 @@ class AuthTokensDTO(BaseDTO):
     refresh_token: str
     token_type: str = "bearer"
     expires_at: datetime
+
+
+class TokenRefreshDTO(BaseDTO):
+    refresh_token: str

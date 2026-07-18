@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
+from hmac import new
 from typing import Optional
 
 from fastapi import Depends
@@ -7,8 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.apps.base.infra.security import get_security, Security
 from src.apps.base.infra.services import BaseService
-from src.apps.users.dto.user import AuthTokensDTO, UserBaseDTO, UserCreateDTO, UserLoginDTO
-from src.apps.users.exceptions import InvalidCredentialsError, UserAlreadyExistsError
+from src.apps.users.dto.user import (
+    AuthTokensDTO,
+    TokenRefreshDTO,
+    UserBaseDTO,
+    UserCreateDTO,
+    UserLoginDTO,
+)
+from src.apps.users.exceptions import (
+    InvalidCredentialsError,
+    InvalidTokenError,
+    SessionNotFoundError,
+    UserAlreadyExistsError,
+)
 from src.apps.users.infra.uow import User, UserUnitOfWork
 from src.config.database.sessions import get_async_session
 
@@ -77,6 +89,52 @@ class UserService(BaseService):
             refresh_token=refresh_token,
             token_type="bearer",
             expires_at=expire,
+        )
+    
+    async def refresh(
+        self,
+        payload: TokenRefreshDTO,
+        user_agent: Optional[str],
+        ip_address: Optional[str],
+    ) -> AuthTokensDTO:
+        """Refresh jwt tokens using refresh token."""
+
+        jwt_payload = self.security.decode_token(payload.refresh_token, expected_type="refresh")
+        user_id = jwt_payload.get("sub")
+
+        old_token_hash = self.security.hash_token_sha256(payload.refresh_token)
+
+        async with self.uow:
+            session = await self.uow.user_sessions.get_by_hash(old_token_hash)
+            if not session:
+                raise SessionNotFoundError("Session not found for the provided refresh token.")
+            
+            if session.expires_at < datetime.now(timezone.utc):
+                raise SessionNotFoundError("Session has expired for the provided refresh token.")
+            
+            await self.uow.user_sessions.delete_expired_sessions(user_id=user_id)
+
+            new_access_token = self.security.create_access_token(user_id=user_id)
+            new_refresh_token, new_expire = self.security.create_refresh_token(user_id=user_id)
+            new_token_hash = self.security.hash_token_sha256(new_refresh_token)
+
+            await self.uow.user_sessions.update(
+                data={
+                    "refresh_token_hash": new_token_hash,
+                    "expires_at": new_expire,
+                    "user_agent": user_agent,
+                    "ip_address": ip_address
+                },
+                id=session.id,
+            )
+
+            await self.uow.commit()
+        
+        return AuthTokensDTO(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            token_type="bearer",
+            expires_at=new_expire,
         )
         
 

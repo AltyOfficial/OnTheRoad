@@ -25,6 +25,10 @@ class UserLoginRequestSchema(CustomBaseModel):
     password: str
 
 
+class RefreshTokenRequestSchema(CustomBaseModel):
+    refresh_token: str
+
+
 class AuthTokenResponseSchema(CustomBaseModel):
     access_token: str
     refresh_token: str

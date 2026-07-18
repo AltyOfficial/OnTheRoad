@@ -11,6 +11,7 @@ from starlette.requests import Request
 
 from src.api.v1.users.schemas import (
     AuthTokenResponseSchema,
+    RefreshTokenRequestSchema,
     UserCreateRequestSchema,
     UserDetailResponseSchema,
     UserLoginRequestSchema,
@@ -83,6 +84,37 @@ async def login_user(
         )
     except Exception as exc:
         logger.error(f"Error logging in user: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"server error",
+        )
+
+    return AuthTokenResponseSchema.model_validate(tokens)
+
+
+@router.post(
+    "/refresh/",
+    description="Refresh JWT tokens",
+    response_model=AuthTokenResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def refresh_tokens(
+    payload: RefreshTokenRequestSchema,
+    service: UserService = Depends(get_user_service),
+    user_agent: Optional[str] = Header(default=None),
+    ip_address: Optional[str] = Header(default=None),
+) -> AuthTokenResponseSchema:
+    """Refresh JWT tokens."""
+
+    try:
+        tokens = await service.refresh(payload=payload, user_agent=user_agent, ip_address=ip_address)
+    except (InvalidTokenError, SessionNotFoundError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        )
+    except Exception as exc:
+        logger.error(f"Error refreshing tokens: {exc}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"server error",
