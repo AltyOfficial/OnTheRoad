@@ -32,3 +32,13 @@ class UpdatedAtMixin:
         default=datetime.now,
         onupdate=datetime.now,
     )
+
+
+class DisplayMixin:
+
+    @property
+    def get_display_value(self) -> str:
+        return getattr(self, "title")
+
+    def __str__(self) -> str:
+        return self.get_display_value
