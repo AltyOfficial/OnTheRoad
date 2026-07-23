@@ -1,8 +1,33 @@
 import { useState } from 'react';
+import Cookies from 'js-cookie';
 import { Car, MapPin, Users, Award } from 'lucide-react';
+import AuthModal from './components/AuthModal';
+import { logoutUser } from './api/auth';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
-  const [isLoggedIn] = useState(false);   // или полностью удали, если не нужен
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'login' | 'register'>('login');
+  const [isLoggedIn, setIsLoggedIn] = useState(!!Cookies.get('access_token'));
+
+  const openLogin = () => {
+    setModalMode('login');
+    setIsAuthModalOpen(true);
+  };
+
+  const openRegister = () => {
+    setModalMode('register');
+    setIsAuthModalOpen(true);
+  };
+
+  const handleAuthSuccess = () => {
+    setIsLoggedIn(true);
+  };
+
+  const logout = async () => {
+    await logoutUser();
+    setIsLoggedIn(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-gray-900">
@@ -19,24 +44,43 @@ function App() {
           <div className="flex items-center gap-8 text-sm font-medium">
             <a href="#features" className="hover:text-emerald-600 transition-colors">Возможности</a>
             <a href="#about" className="hover:text-emerald-600 transition-colors">О проекте</a>
+            
             {isLoggedIn ? (
-              <button
-                onClick={() => {/* logout */}}
-                className="px-5 py-2 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition"
+              <button 
+                onClick={logout}
+                className="px-5 py-2 bg-red-500 hover:bg-red-600 text-white rounded-2xl transition"
               >
-                Личный кабинет
+                Выйти
               </button>
             ) : (
-              <button
-                onClick={() => {/* открыть модалку логина */}}
-                className="px-5 py-2 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition"
-              >
-                Войти
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  onClick={openRegister}
+                  className="px-5 py-2 border border-gray-300 hover:bg-gray-50 rounded-2xl transition"
+                >
+                  Регистрация
+                </button>
+                <button 
+                  onClick={openLogin}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl transition"
+                >
+                  Войти
+                </button>
+              </div>
             )}
           </div>
         </div>
       </nav>
+
+      {/* Модалка авторизации */}
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        mode={modalMode}
+        onSuccess={handleAuthSuccess}
+      />
+
+      <Toaster position="top-center" />
 
       {/* Hero Section */}
       <section className="pt-24 pb-20 bg-gradient-to-br from-white via-emerald-50 to-white">
@@ -56,7 +100,7 @@ function App() {
 
           <div className="flex gap-4 justify-center">
             <button 
-              onClick={() => {/* регистрация */}}
+              onClick={openRegister}
               className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white text-lg font-semibold rounded-3xl transition-all active:scale-95"
             >
               Начать путешествие
