@@ -1,5 +1,18 @@
 services:
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth
+      - content
+    restart: unless-stopped
+    networks:
+      - app
+
   db-auth:
     image: postgres:15-alpine
     container_name: db-auth

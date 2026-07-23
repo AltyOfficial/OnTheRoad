@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Car, MapPin, Users, Award } from 'lucide-react';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // потом заменишь на реальную проверку токена
+  const [isLoggedIn] = useState(false);   // или полностью удали, если не нужен
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-gray-900">
