@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
 from src.config.logger import LOGGING
@@ -41,6 +42,20 @@ def create_app() -> FastAPI:
         docs_url=settings.app.PROJECT_DOCS_URL,
         openapi_url=settings.app.PROJECT_OPENAPI_URL,
         redirect_slashes=False,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
     )
 
     return app
